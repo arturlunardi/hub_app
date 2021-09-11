@@ -68,6 +68,7 @@ def get_df_deals():
     return df_deals
 
 
+@st.cache
 def to_excel(df):
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -77,21 +78,16 @@ def to_excel(df):
     return processed_data
 
 
-def get_table_download_link(df):
-    """Generates a link allowing the data in a given panda dataframe to be downloaded
-    in:  dataframe
-    out: href string
-    """
-    val = to_excel(df)
-    b64 = base64.b64encode(val)  # val looks like b'...'
-    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="extract.xlsx">Download excel file</a>' # decode b'abc' => abc
-
-
-df = get_df_deals()
+df_deals = get_df_deals()
+df_excel = to_excel(df_deals)
 password = st.text_input("Password:", value="", type="password")
 
 if password == st.secrets['application_password']:
-    st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+    st.download_button(
+        label="Pressione para Download",
+        data=df_excel,
+        file_name='extract.xlsx',
+    )
 elif password == "":
     st.write('Digite a senha para acessar o App')
 else:
