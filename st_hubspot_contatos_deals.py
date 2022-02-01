@@ -40,7 +40,7 @@ def check_password(secrets_key):
 
  
 @st.cache
-def get_df_usuarios():
+def get_df_usuarios(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}):
     """
     Retorna df do vista com todos os usuários de locação.
     """
