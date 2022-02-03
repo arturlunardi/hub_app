@@ -171,7 +171,10 @@ def get_form_cliente_atendido(indicadores, origens, finalidade, exact_filtro_1, 
                         if row['text'] == 'Já escolheu algum imóvel específico?':
                             client_exact_filter_submit_dict['Código do Imóvel'] = st.text_input('Digite aqui o código do imóvel se ele existir.')
                     elif row.get('type') == 'Open':
-                        client_exact_filter_submit_dict[row['text']] = st.text_input(label=row['text'])
+                        if row['text'] == 'Quanto você pode/está disposto a investir?':
+                            client_exact_filter_submit_dict[row['text']] = st.number_input(label=row['text'])
+                        else:
+                            client_exact_filter_submit_dict[row['text']] = st.text_input(label=row['text'])
 
             st.info("**Por favor, confira todos os valores antes de enviar o formulário.**")
             submitted = st.form_submit_button("Enviar")
@@ -217,7 +220,10 @@ def get_form_cliente_atendido(indicadores, origens, finalidade, exact_filtro_1, 
                         if row['text'] == 'Já escolheu algum imóvel específico?':
                             client_exact_filter_submit_dict['Código do Imóvel'] = st.text_input('Digite aqui o código do imóvel se ele existir.')
                     elif row.get('type') == 'Open':
-                        client_exact_filter_submit_dict[row['text']] = st.text_input(label=row['text'])
+                        if row['text'] == 'Quanto você pode/está disposto a investir?':
+                            client_exact_filter_submit_dict[row['text']] = st.number_input(label=row['text'])
+                        else:
+                            client_exact_filter_submit_dict[row['text']] = st.text_input(label=row['text'])
 
             st.info("**Por favor, confira todos os valores antes de enviar o formulário.**")
             submitted = st.form_submit_button("Enviar")
