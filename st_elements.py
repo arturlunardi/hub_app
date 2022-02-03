@@ -4,6 +4,13 @@ import json
 import re
 
 
+def real_br_money_mask(my_value):
+    a = '{:,.2f}'.format(float(my_value))
+    b = a.replace(',','v')
+    c = b.replace('.',',')
+    return "R$ " + c.replace('v','.')
+
+
 def create_exact_lead(**kwargs):
     exact_headers = {
         'Content-Type': 'application/json',
@@ -20,6 +27,7 @@ def create_exact_lead(**kwargs):
         for key, value in answers_filter_dict.items():
             if type(value) == list:
                 answers_filter_dict[key] = ", ".join(value)
+        answers_filter_dict["Quanto você pode/está disposto a investir?"] = real_br_money_mask(answers_filter_dict["Quanto você pode/está disposto a investir?"])
         
     # criando o lead
     values = {
