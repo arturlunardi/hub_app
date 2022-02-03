@@ -104,8 +104,8 @@ def get_form_cliente_nao_atendido(indicadores, origens):
                 st.error('Por favor, preencha todos os campos corretamente.')
                 st.stop()
             elif len(re.findall(pattern, client_exact_submit_dict["phone"])) < 1:
-                    st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
-                    st.stop()
+                st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
+                st.stop()
             st.spinner('Registrando o formulário...')
             try:
                 create_exact_lead(client_dict=client_exact_submit_dict)  
