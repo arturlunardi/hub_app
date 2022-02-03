@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import json
+import re
 
 
 def create_exact_lead(**kwargs):
@@ -80,6 +81,8 @@ def create_exact_lead(**kwargs):
 
 def get_form_cliente_nao_atendido(indicadores, origens):
     client_exact_submit_dict = {"cliente_atendido": "Não"}
+    pattern = "\(\d{2,}\) \d{4,}\-\d{4}"
+
     with st.form("cadastro_cliente_nao_realizado"):
         col_1, col_2 = st.columns(2)
         with col_1:
@@ -100,17 +103,22 @@ def get_form_cliente_nao_atendido(indicadores, origens):
             if any([True for field in [client_exact_submit_dict.get(key) for key in required_fields_clients] if field == '' or field == []]):
                 st.error('Por favor, preencha todos os campos corretamente.')
                 st.stop()
+            elif len(re.findall(pattern, client_exact_submit_dict["phone"])) < 1:
+                    st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
+                    st.stop()
+            st.spinner('Registrando o formulário...')
             try:
                 create_exact_lead(client_dict=client_exact_submit_dict)  
                 st.success("Formulário enviado com sucesso!")
             except:
-                st.write("Houve um erro no envio do formulário. Por favor, tente novamente. Caso o erro persista, entre em contato com o administrador.")
+                st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
     return None
 
 
 def get_form_cliente_atendido(indicadores, origens, finalidade, exact_filtro_1, exact_filtro_2):
     client_exact_submit_dict = {"cliente_atendido": "Sim"}
     client_exact_filter_submit_dict = {}
+    pattern = "\(\d{2,}\) \d{4,}\-\d{4}"
 
     filter_dict = {
                 'locacao': {
@@ -165,11 +173,15 @@ def get_form_cliente_atendido(indicadores, origens, finalidade, exact_filtro_1, 
                 if any([True for field in [client_exact_submit_dict.get(key) for key in required_fields_clients] if field == '' or field == []]) or any([True for field in [client_exact_filter_submit_dict.get(key) for key in required_fields_filters] if field == '' or field == []]):
                     st.error('Por favor, preencha todos os campos corretamente.')
                     st.stop()
+                elif len(re.findall(pattern, client_exact_submit_dict["phone"])) < 1:
+                    st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
+                    st.stop()
+                st.spinner('Registrando o formulário...')
                 try:
                     create_exact_lead(client_dict=client_exact_submit_dict, answers_filter_dict=client_exact_filter_submit_dict)
                     st.success("Formulário enviado com sucesso!")
                 except:
-                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente. Caso o erro persista, entre em contato com o administrador.")
+                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
 
     elif finalidade == 'Comercial':
         client_exact_filter_submit_dict['finalidade'] = 'Comercial'
@@ -207,11 +219,15 @@ def get_form_cliente_atendido(indicadores, origens, finalidade, exact_filtro_1, 
                 if any([True for field in [client_exact_submit_dict.get(key) for key in required_fields_clients] if field == '' or field == []]) or any([True for field in [client_exact_filter_submit_dict.get(key) for key in required_fields_filters] if field == '' or field == []]):
                     st.error('Por favor, preencha todos os campos corretamente.')
                     st.stop()
+                elif len(re.findall(pattern, client_exact_submit_dict["phone"])) < 1:
+                    st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
+                    st.stop()
+                st.spinner('Registrando o formulário...')
                 try:
                     create_exact_lead(client_dict=client_exact_submit_dict, answers_filter_dict=client_exact_filter_submit_dict)
                     st.success("Formulário enviado com sucesso!")
                 except:
-                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente. Caso o erro persista, entre em contato com o administrador.")
+                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
                
     return None
 

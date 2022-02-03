@@ -9,6 +9,7 @@ from hubspot.crm.contacts import ApiException as ContactException
 from hubspot.crm.properties import ApiException as PropertyException
 import datetime
 import st_elements
+import re
 
 
 st.set_page_config(
@@ -79,7 +80,6 @@ def get_df_usuarios(only_vendas):
             break
         df_usuarios = pd.DataFrame(json.loads(response.content))[1:].T
     df_usuarios['Equipe'] = df_usuarios['Equipe'].apply(lambda x: [x[key] for key in x][0]['Nome'] if type(x) == dict else x)
-    # df_usuarios_loc = df_usuarios.loc[(df_usuarios['Inativo'] == 'Nao')]
     df_usuarios.reset_index(inplace=True, drop=True)
 
     return df_usuarios.sort_values(by="Nomecompleto")
@@ -120,7 +120,6 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict):
         # criando o contato no hubspot
         simple_public_object_input = SimplePublicObjectInput(
             properties=contact_dict
-            # {"email": contact_submit_dict["email"], "firstname": contact_submit_dict["firstname"], "lastname": contact_submit_dict["lastname"], "phone": contact_submit_dict["phone"]}
         )
         create_client_response = api_client.crm.contacts.basic_api.create(
             simple_public_object_input=simple_public_object_input
@@ -133,7 +132,6 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict):
         deal_dict["dealstage"] = "appointmentscheduled"
         simple_public_object_input = SimplePublicObjectInput(
             properties=deal_dict
-            # {"dealname": "teste", "bairro": "Centro", "rua": "Apartamento", "origem": "Indicação", "tipo_de_imovel": "Residencial", "hubspot_owner_id": "53280320", "dealname": "teste", "dealstage": "appointmentscheduled"}
         )
         create_deal_response = api_client.crm.deals.basic_api.create(
             simple_public_object_input=simple_public_object_input
@@ -181,7 +179,9 @@ if check_password("application_password"):
         deal_submit_dict = {}
         contact_submit_dict = {}
         note_submit_dict = {}
+        pattern = "\(\d{2,}\) \d{4,}\-\d{4}"
 
+        # esse dict são as propriedades que serão consultadas
         hubspot_properties = [
             {'property_name': 'rua', 'object_type': 'Deals'},
             {'property_name': 'bairro', 'object_type': 'Deals'},
@@ -219,6 +219,9 @@ if check_password("application_password"):
                 if any([True for field in required_fields if field == '' or field == []]):
                     st.error('Por favor, preencha todos os campos corretamente.')
                     st.stop()
+                elif len(re.findall(pattern, contact_submit_dict["phone"])) < 1:
+                    st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
+                    st.stop()
                 # criando a mensagem para ser enviada no deal do hubspot
                 note_submit_dict["note"] = f'Imóvel indicado pelo corretor {deal_submit_dict["nome_do_indicador"]}. O corretor indicou que o conversou com o proprietário do imóvel no dia {data_de_conversa}. O imóvel está identificado como {deal_submit_dict["rua"]}, {deal_submit_dict["dealname"]} no bairro {deal_submit_dict["bairro"]} e estaria disponível para {deal_submit_dict["status"]}. O proprietário do imóvel é {contact_submit_dict["firstname"]} {contact_submit_dict["lastname"]} e o e-mail dele é {contact_submit_dict["email"] if contact_submit_dict["email"] != "" else "inexistente"}. O imóvel foi captado através de {deal_submit_dict["origem"]}, o contato do proprietário foi obtido através de {deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"]}. O telefone dele é {contact_submit_dict["phone"] if contact_submit_dict["phone"] != "" else "inexistente"}. O que ficou conversado entre o corretor e o proprietário foi: {mensagem}.'
                 # colocar um spinner aqui checando se foi tudo bonitinho pro hubspot, se foi, exibe a mensagem, se não, pede pra cadastrar de novo
@@ -227,7 +230,7 @@ if check_password("application_password"):
                     create_hubspot_deal(contact_dict=contact_submit_dict, deal_dict=deal_submit_dict, note_dict=note_submit_dict)
                     st.success("Formulário enviado com sucesso!")
                 except:
-                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente. Caso o erro persista, entre em contato com o administrador.")
+                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
 
 
     # ------------- Clientes ------------------------
@@ -246,7 +249,6 @@ if check_password("application_password"):
 
             st_elements.get_form_cliente_atendido(indicadores=df_usuarios_ativos_vista_all, origens=origens, finalidade=finalidade, exact_filtro_1=exact_filtro_1, exact_filtro_2=exact_filtro_2)
 
-            
         else:
             st_elements.get_form_cliente_nao_atendido(indicadores=df_usuarios_ativos_vista_all, origens=origens)
             
