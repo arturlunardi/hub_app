@@ -20,6 +20,63 @@ st.set_page_config(
 )
 
 
+def create_hubspot_file(filename, file_content):
+    post_url = f'https://api.hubapi.com/filemanager/api/v3/files/upload?hapikey={st.secrets["api_key"]}'
+
+    file_options = {
+        'access': 'PRIVATE',
+        'ttl': 'P12M',
+        "overwrite": False,
+        'duplicateValidationStrategy': 'NONE',
+        'duplicateValidationScope': 'EXACT_FOLDER'
+    }
+
+    files_data = {
+        'file': (filename, file_content, 'application/octet-stream'),
+        'options': (None, json.dumps(file_options), 'text/strings'),
+        'folderPath': (None, st.secrets['folder_agenciamentos_nome'], 'text/strings')
+    }
+
+    response = requests.post(post_url, files = files_data)
+
+    return response
+
+
+def associate_file_to_deal(deal_id, id_do_arquivo):
+    url = "https://api.hubapi.com/engagements/v1/engagements"
+
+    querystring = {"hapikey": st.secrets['api_key']}
+
+    payload = json.dumps({
+        "engagement": {
+            "active": 'true',
+            "type": "NOTE",
+        },
+        "associations": {
+            "contactIds": [],
+            "companyIds": [],
+            "dealIds": [deal_id],
+            "ownerIds": []
+        },
+        "attachments": [
+            {
+                "id": id_do_arquivo
+            }
+        ],
+        "metadata": {
+            "body": "nota"
+        }
+    })
+
+    headers = {
+        'Content-Type': "application/json",
+    }
+
+    response = requests.request("POST", url, data=payload, headers=headers, params=querystring)
+
+    return response
+
+
 @st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_exact_filtros():
     exact_headers = {
@@ -115,7 +172,7 @@ def create_hubspot_note(message):
     return note_id
 
 
-def create_hubspot_deal(contact_dict, deal_dict, note_dict):
+def create_hubspot_deal(contact_dict, deal_dict, note_dict, files=None):
     try:
         # criando o contato no hubspot
         simple_public_object_input = SimplePublicObjectInput(
@@ -138,6 +195,14 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict):
         )
 
         deal_id = create_deal_response.to_dict()["id"]
+
+        # associando os files ao deal, se existirem
+        if files:
+            for file in files:
+                file_string = file.read()
+                r = create_hubspot_file(filename=file.name, file_content=file_string)
+                id_do_arquivo = json.loads(r.content)['objects'][0]['id']
+                associate_file_to_deal(deal_id=deal_id, id_do_arquivo=id_do_arquivo)
 
         # associar o deal ao id do contato
         associate_contact_deal_response = api_client.crm.deals.associations_api.create(deal_id=deal_id, to_object_type="Contacts", to_object_id=client_id, association_type="deal_to_contact")
@@ -210,6 +275,8 @@ if check_password("application_password"):
                     deal_submit_dict[property.get('property_name')] = st.selectbox(options=property_characteristics.get("options"), label=property_characteristics.get("label"))
                 deal_submit_dict["nome_do_indicador"] = st.selectbox(options=df_usuarios_ativos_vista_vendas['Nomecompleto'].tolist(), label='Indicador')
             
+            files = st.file_uploader(label='Caso existam documentos, anexe-os aqui.', accept_multiple_files=True)
+            
             # Every form must have a submit button.
             st.info("**Por favor, confira todos os valores antes de enviar o formulário.**")
             submitted = st.form_submit_button("Enviar")
@@ -225,9 +292,11 @@ if check_password("application_password"):
                 # criando a mensagem para ser enviada no deal do hubspot
                 note_submit_dict["note"] = f'Imóvel indicado pelo corretor {deal_submit_dict["nome_do_indicador"]}. O corretor indicou que o conversou com o proprietário do imóvel no dia {data_de_conversa}. O imóvel está identificado como {deal_submit_dict["rua"]}, {deal_submit_dict["dealname"]} no bairro {deal_submit_dict["bairro"]} e estaria disponível para {deal_submit_dict["status"]}. O proprietário do imóvel é {contact_submit_dict["firstname"]} {contact_submit_dict["lastname"]} e o e-mail dele é {contact_submit_dict["email"] if contact_submit_dict["email"] != "" else "inexistente"}. O imóvel foi captado através de {deal_submit_dict["origem"]}, o contato do proprietário foi obtido através de {deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"]}. O telefone dele é {contact_submit_dict["phone"] if contact_submit_dict["phone"] != "" else "inexistente"}. O que ficou conversado entre o corretor e o proprietário foi: {mensagem}.'
                 # colocar um spinner aqui checando se foi tudo bonitinho pro hubspot, se foi, exibe a mensagem, se não, pede pra cadastrar de novo
-                st.spinner('Registrando o formulário...')
+                
+
                 try:
-                    create_hubspot_deal(contact_dict=contact_submit_dict, deal_dict=deal_submit_dict, note_dict=note_submit_dict)
+                    with st.spinner('Registrando o formulário...'):
+                        create_hubspot_deal(contact_dict=contact_submit_dict, deal_dict=deal_submit_dict, note_dict=note_submit_dict, files=files)
                     st.success("Formulário enviado com sucesso!")
                 except:
                     st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
