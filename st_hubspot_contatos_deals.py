@@ -291,13 +291,33 @@ if check_password("application_password"):
                     st.stop()
                 # criando a mensagem para ser enviada no deal do hubspot
                 note_submit_dict["note"] = f'Imóvel indicado pelo corretor {deal_submit_dict["nome_do_indicador"]}. O corretor indicou que o conversou com o proprietário do imóvel no dia {data_de_conversa}. O imóvel está identificado como {deal_submit_dict["rua"]}, {deal_submit_dict["dealname"]} no bairro {deal_submit_dict["bairro"]} e estaria disponível para {deal_submit_dict["status"]}. O proprietário do imóvel é {contact_submit_dict["firstname"]} {contact_submit_dict["lastname"]} e o e-mail dele é {contact_submit_dict["email"] if contact_submit_dict["email"] != "" else "inexistente"}. O imóvel foi captado através de {deal_submit_dict["origem"]}, o contato do proprietário foi obtido através de {deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"]}. O telefone dele é {contact_submit_dict["phone"] if contact_submit_dict["phone"] != "" else "inexistente"}. O que ficou conversado entre o corretor e o proprietário foi: {mensagem}.'
-                # colocar um spinner aqui checando se foi tudo bonitinho pro hubspot, se foi, exibe a mensagem, se não, pede pra cadastrar de novo
-                
 
+                dict_to_show_after_success = {
+                    "Nome do proprietário": contact_submit_dict["firstname"],
+                    "Sobrenome do proprietário": contact_submit_dict["lastname"],
+                    "Email do proprietário": contact_submit_dict["email"],
+                    "Telefone do proprietário": contact_submit_dict["phone"],
+                    "Origem do Contato do Proprietário": deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"],
+                    "Data de conversa com o proprietário": data_de_conversa.strftime('%d/%m/%Y'),
+                    "Endereço do imóvel": deal_submit_dict["dealname"],
+                    "Tipologia": deal_submit_dict["rua"],
+                    "Bairro": deal_submit_dict["bairro"],
+                    "Cidade": deal_submit_dict["cidade"],
+                    "Finalidade": deal_submit_dict["tipo_de_imovel"],
+                    "Origem do Imóvel": deal_submit_dict["origem"],
+                    "Status": deal_submit_dict["status"],
+                    "Nome do Indicador": deal_submit_dict["nome_do_indicador"],
+                    "Mensagem": mensagem,
+                }
+                
                 try:
+                    # colocar um spinner aqui checando se foi tudo bonitinho pro hubspot, se foi, exibe a mensagem, se não, pede pra cadastrar de novo
                     with st.spinner('Registrando o formulário...'):
                         create_hubspot_deal(contact_dict=contact_submit_dict, deal_dict=deal_submit_dict, note_dict=note_submit_dict, files=files)
                     st.success("Formulário enviado com sucesso!")
+                    st.write(f"Os dados enviados foram: ")
+                    st.write(dict_to_show_after_success)
+                    st.warning("Por favor, confirme o envio dos dados. Caso haja alguma alteração, entrar em contato diretamente com o setor responsável.")
                 except:
                     st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
 
