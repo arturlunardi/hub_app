@@ -20,6 +20,36 @@ st.set_page_config(
 )
 
 
+def get_exact_origens():
+    exact_headers = {
+        'Content-Type': 'application/json',
+        'token_exact': st.secrets['token_exact_api']
+    }
+
+    response = requests.get('https://api.exactsales.com.br/v2/origens', headers=exact_headers)
+
+    return [i["value"] for i in json.loads(response.content)]
+
+
+def get_all_empreendimentos_vista():
+    headers = {
+    'accept': 'application/json'
+    }
+    b = []
+
+    for i in range(1, 99999):
+        url = f'http://brasaolt-rest.vistahost.com.br/imoveis/listar?key={st.secrets["vista_api_key"]}&showtotal=0&showInternal=1&showSuspended=1&pesquisa={{"fields":["Status", "Codigo", "Categoria", "Empreendimento"], "order": {{"Codigo": "asc"}}, "filter": {{"Categoria": ["Empreendimento"]}}, "paginacao":{{"pagina":{i},"quantidade":50}}}}'
+        response = requests.get(url, headers = headers)
+        if response.status_code == 500:
+            break
+        b.append(json.loads(response.content))
+    a = []
+    for item in b:
+        df = pd.DataFrame(item).T
+        a.append(df)
+    return pd.concat(item for item in a)
+
+
 def create_hubspot_file(filename, file_content):
     post_url = f'https://api.hubapi.com/filemanager/api/v3/files/upload?hapikey={st.secrets["api_key"]}'
 
@@ -324,20 +354,34 @@ if check_password("application_password"):
 
     # ------------- Clientes ------------------------
 
+    # if condition == 'Cadastro de Clientes':
+    #     st.subheader("Formulário de Cadastro de Clientes")
+    #     # isso aqui eu coloco no custom field de corretor responsável
+    #     df_usuarios_ativos_vista_all = get_df_usuarios(only_vendas=False)
+    #     origens = ['Anúncio jornal', 'Inbound Marketing', 'Indicacao', 'Portais', 'Prospecção Ativa', 'Redes Sociais', 'Sede', 'Site', 'website_formulario_agendar_visita', 'website_formulario_anuncio', 'website_formulario_contato', 'website_formulario_indicacao', 'WhatsApp']
+    #     atendimento_realizado = st.checkbox(label='Atendimento Já Realizado', help='Marque se você já realizou o atendimento e coletou todas as informações do cliente.')
+        
+    #     if atendimento_realizado:
+    #         exact_filtro_1, exact_filtro_2 = get_exact_filtros()
+
+    #         finalidade = st.selectbox(label='Finalidade', options=['Residencial', 'Comercial'])
+
+    #         st_elements.get_form_cliente_atendido(indicadores=df_usuarios_ativos_vista_all, origens=origens, finalidade=finalidade, exact_filtro_1=exact_filtro_1, exact_filtro_2=exact_filtro_2)
+
+    #     else:
+    #         st_elements.get_form_cliente_nao_atendido(indicadores=df_usuarios_ativos_vista_all, origens=origens)
+
     if condition == 'Cadastro de Clientes':
         st.subheader("Formulário de Cadastro de Clientes")
         # isso aqui eu coloco no custom field de corretor responsável
         df_usuarios_ativos_vista_all = get_df_usuarios(only_vendas=False)
-        origens = ['Anúncio jornal', 'Inbound Marketing', 'Indicacao', 'Portais', 'Prospecção Ativa', 'Redes Sociais', 'Sede', 'Site', 'website_formulario_agendar_visita', 'website_formulario_anuncio', 'website_formulario_contato', 'website_formulario_indicacao', 'WhatsApp']
-        atendimento_realizado = st.checkbox(label='Atendimento Já Realizado', help='Marque se você já realizou o atendimento e coletou todas as informações do cliente.')
-        
-        if atendimento_realizado:
-            exact_filtro_1, exact_filtro_2 = get_exact_filtros()
+        # origens = ['Anúncio jornal', 'Inbound Marketing', 'Indicacao', 'Portais', 'Prospecção Ativa', 'Redes Sociais', 'Sede', 'Site', 'website_formulario_agendar_visita', 'website_formulario_anuncio', 'website_formulario_contato', 'website_formulario_indicacao', 'WhatsApp']
+        origens = get_exact_origens()
+        empreendimentos = get_all_empreendimentos_vista()
 
-            finalidade = st.selectbox(label='Finalidade', options=['Residencial', 'Comercial'])
+        st_elements.get_form_client(indicadores=df_usuarios_ativos_vista_all, origens=origens, empreendimentos=sorted(empreendimentos["Empreendimento"].unique()))
 
-            st_elements.get_form_cliente_atendido(indicadores=df_usuarios_ativos_vista_all, origens=origens, finalidade=finalidade, exact_filtro_1=exact_filtro_1, exact_filtro_2=exact_filtro_2)
 
-        else:
-            st_elements.get_form_cliente_nao_atendido(indicadores=df_usuarios_ativos_vista_all, origens=origens)
+
+
             
