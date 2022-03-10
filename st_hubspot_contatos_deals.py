@@ -20,6 +20,7 @@ st.set_page_config(
 )
 
 
+@st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_exact_origens():
     exact_headers = {
         'Content-Type': 'application/json',
@@ -31,6 +32,7 @@ def get_exact_origens():
     return [i["value"] for i in json.loads(response.content)]
 
 
+@st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_all_empreendimentos_vista():
     headers = {
     'accept': 'application/json'
