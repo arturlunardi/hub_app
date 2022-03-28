@@ -287,71 +287,109 @@ if check_password("application_password"):
             {'property_name': 'origem', 'object_type': 'Deals'},
             {'property_name': 'status', 'object_type': 'Deals'},
             {'property_name': 'data_de_contato_para_confirmacao_de_informacoes', 'object_type': 'Deals'},
-        ]    
+        ]
 
-        with st.form("cadastro_agenciamentos"):
-            deal_submit_dict["dealname"] = st.text_input(label='Endereço do Imóvel', help='Informe apenas a Rua, o nº do imóvel e se existir, o complemento.')
-            col_1, col_2 = st.columns(2)
-            with col_1:
-                contact_submit_dict["firstname"] = st.text_input(label='Nome do Proprietário', help='Informe o nome completo do proprietário do imóvel.')
-                contact_submit_dict["lastname"] = st.text_input(label='Sobrenome do Proprietário', help='Informe o sobrenome do proprietário do imóvel.')
-                contact_submit_dict["email"] = st.text_input(label='E-mail do Proprietário', help='Informe o e-mail do proprietário do imóvel.')
-                contact_submit_dict["phone"] = st.text_input(label='Telefone do Proprietário', help='Informe o telefone do proprietário do imóvel.')
-                data_de_conversa = st.date_input(label='Data de Conversa com o Proprietário', help='Informe a data da conversa com o propriétario.')
-                mensagem = st.text_area(label='Mensagem', help='Descreva brevemente o que foi conversado com o proprietário.', height=238)
+        type_of_view = st.radio("Selecione o tipo de visualização", ("Cadastrar um Agenciamento", "Verificar Status dos meus Agenciamentos"))    
 
-            with col_2:
-                for property in hubspot_properties:
-                    property_characteristics = return_labels_hubspot_property(property['object_type'], property['property_name'])
-                    # aqui eu ainda não defini o nome da variável pra adicionar no hub, mas tem que definir
-                    deal_submit_dict[property.get('property_name')] = st.selectbox(options=property_characteristics.get("options"), label=property_characteristics.get("label"))
-                deal_submit_dict["nome_do_indicador"] = st.selectbox(options=df_usuarios_ativos_vista_vendas['Nomecompleto'].tolist(), label='Indicador')
-            
-            files = st.file_uploader(label='Caso existam documentos, anexe-os aqui.', accept_multiple_files=True)
-            
-            # Every form must have a submit button.
-            st.info("**Por favor, confira todos os valores antes de enviar o formulário.**")
-            submitted = st.form_submit_button("Enviar")
-            if submitted:
-                # checando se existe algum campo requirido em campo.
-                required_fields = [deal_submit_dict["dealname"], contact_submit_dict["firstname"], contact_submit_dict["lastname"], contact_submit_dict["phone"], mensagem]
-                if any([True for field in required_fields if field == '' or field == []]):
-                    st.error('Por favor, preencha todos os campos corretamente.')
-                    st.stop()
-                elif len(re.findall(pattern, contact_submit_dict["phone"])) < 1:
-                    st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
-                    st.stop()
-                # criando a mensagem para ser enviada no deal do hubspot
-                note_submit_dict["note"] = f'Imóvel indicado pelo corretor {deal_submit_dict["nome_do_indicador"]}. O corretor indicou que o conversou com o proprietário do imóvel no dia {data_de_conversa}. O imóvel está identificado como {deal_submit_dict["rua"]}, {deal_submit_dict["dealname"]} no bairro {deal_submit_dict["bairro"]} e estaria disponível para {deal_submit_dict["status"]}. O proprietário do imóvel é {contact_submit_dict["firstname"]} {contact_submit_dict["lastname"]} e o e-mail dele é {contact_submit_dict["email"] if contact_submit_dict["email"] != "" else "inexistente"}. O imóvel foi captado através de {deal_submit_dict["origem"]}, o contato do proprietário foi obtido através de {deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"]}. O telefone dele é {contact_submit_dict["phone"] if contact_submit_dict["phone"] != "" else "inexistente"}. O que ficou conversado entre o corretor e o proprietário foi: {mensagem}.'
+        if type_of_view == "Cadastrar um Agenciamento":
+            with st.form("cadastro_agenciamentos"):
+                deal_submit_dict["dealname"] = st.text_input(label='Endereço do Imóvel', help='Informe apenas a Rua, o nº do imóvel e se existir, o complemento.')
+                col_1, col_2 = st.columns(2)
+                with col_1:
+                    contact_submit_dict["firstname"] = st.text_input(label='Nome do Proprietário', help='Informe o nome completo do proprietário do imóvel.')
+                    contact_submit_dict["lastname"] = st.text_input(label='Sobrenome do Proprietário', help='Informe o sobrenome do proprietário do imóvel.')
+                    contact_submit_dict["email"] = st.text_input(label='E-mail do Proprietário', help='Informe o e-mail do proprietário do imóvel.')
+                    contact_submit_dict["phone"] = st.text_input(label='Telefone do Proprietário', help='Informe o telefone do proprietário do imóvel.')
+                    data_de_conversa = st.date_input(label='Data de Conversa com o Proprietário', help='Informe a data da conversa com o propriétario.')
+                    mensagem = st.text_area(label='Mensagem', help='Descreva brevemente o que foi conversado com o proprietário.', height=238)
 
-                dict_to_show_after_success = {
-                    "Nome do proprietário": contact_submit_dict["firstname"],
-                    "Sobrenome do proprietário": contact_submit_dict["lastname"],
-                    "Email do proprietário": contact_submit_dict["email"],
-                    "Telefone do proprietário": contact_submit_dict["phone"],
-                    "Origem do Contato do Proprietário": deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"],
-                    "Data de conversa com o proprietário": data_de_conversa.strftime('%d/%m/%Y'),
-                    "Endereço do imóvel": deal_submit_dict["dealname"],
-                    "Tipologia": deal_submit_dict["rua"],
-                    "Bairro": deal_submit_dict["bairro"],
-                    "Cidade": deal_submit_dict["cidade"],
-                    "Finalidade": deal_submit_dict["tipo_de_imovel"],
-                    "Origem do Imóvel": deal_submit_dict["origem"],
-                    "Status": deal_submit_dict["status"],
-                    "Nome do Indicador": deal_submit_dict["nome_do_indicador"],
-                    "Mensagem": mensagem,
-                }
+                with col_2:
+                    for property in hubspot_properties:
+                        property_characteristics = return_labels_hubspot_property(property['object_type'], property['property_name'])
+                        # aqui eu ainda não defini o nome da variável pra adicionar no hub, mas tem que definir
+                        deal_submit_dict[property.get('property_name')] = st.selectbox(options=property_characteristics.get("options"), label=property_characteristics.get("label"))
+                    deal_submit_dict["nome_do_indicador"] = st.selectbox(options=df_usuarios_ativos_vista_vendas['Nomecompleto'].tolist(), label='Indicador')
                 
-                try:
-                    # colocar um spinner aqui checando se foi tudo bonitinho pro hubspot, se foi, exibe a mensagem, se não, pede pra cadastrar de novo
-                    with st.spinner('Registrando o formulário...'):
-                        create_hubspot_deal(contact_dict=contact_submit_dict, deal_dict=deal_submit_dict, note_dict=note_submit_dict, files=files)
-                    st.success("Formulário enviado com sucesso!")
-                    st.write(f"Os dados enviados foram: ")
-                    st.write(dict_to_show_after_success)
-                    st.warning("Por favor, confirme o envio dos dados. Caso haja alguma alteração, entrar em contato diretamente com o setor responsável.")
-                except:
-                    st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
+                files = st.file_uploader(label='Caso existam documentos, anexe-os aqui.', accept_multiple_files=True)
+                
+                # Every form must have a submit button.
+                st.info("**Por favor, confira todos os valores antes de enviar o formulário.**")
+                submitted = st.form_submit_button("Enviar")
+                if submitted:
+                    # checando se existe algum campo requirido em campo.
+                    required_fields = [deal_submit_dict["dealname"], contact_submit_dict["firstname"], contact_submit_dict["lastname"], contact_submit_dict["phone"], mensagem]
+                    if any([True for field in required_fields if field == '' or field == []]):
+                        st.error('Por favor, preencha todos os campos corretamente.')
+                        st.stop()
+                    elif len(re.findall(pattern, contact_submit_dict["phone"])) < 1:
+                        st.error('Por favor, o formato do telefone do contato deve ser como em: (55) 99999-9999 ou (55) 3221-5469.')
+                        st.stop()
+                    # criando a mensagem para ser enviada no deal do hubspot
+                    note_submit_dict["note"] = f'Imóvel indicado pelo corretor {deal_submit_dict["nome_do_indicador"]}. O corretor indicou que o conversou com o proprietário do imóvel no dia {data_de_conversa}. O imóvel está identificado como {deal_submit_dict["rua"]}, {deal_submit_dict["dealname"]} no bairro {deal_submit_dict["bairro"]} e estaria disponível para {deal_submit_dict["status"]}. O proprietário do imóvel é {contact_submit_dict["firstname"]} {contact_submit_dict["lastname"]} e o e-mail dele é {contact_submit_dict["email"] if contact_submit_dict["email"] != "" else "inexistente"}. O imóvel foi captado através de {deal_submit_dict["origem"]}, o contato do proprietário foi obtido através de {deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"]}. O telefone dele é {contact_submit_dict["phone"] if contact_submit_dict["phone"] != "" else "inexistente"}. O que ficou conversado entre o corretor e o proprietário foi: {mensagem}.'
+
+                    dict_to_show_after_success = {
+                        "Nome do proprietário": contact_submit_dict["firstname"],
+                        "Sobrenome do proprietário": contact_submit_dict["lastname"],
+                        "Email do proprietário": contact_submit_dict["email"],
+                        "Telefone do proprietário": contact_submit_dict["phone"],
+                        "Origem do Contato do Proprietário": deal_submit_dict["data_de_contato_para_confirmacao_de_informacoes"],
+                        "Data de conversa com o proprietário": data_de_conversa.strftime('%d/%m/%Y'),
+                        "Endereço do imóvel": deal_submit_dict["dealname"],
+                        "Tipologia": deal_submit_dict["rua"],
+                        "Bairro": deal_submit_dict["bairro"],
+                        "Cidade": deal_submit_dict["cidade"],
+                        "Finalidade": deal_submit_dict["tipo_de_imovel"],
+                        "Origem do Imóvel": deal_submit_dict["origem"],
+                        "Status": deal_submit_dict["status"],
+                        "Nome do Indicador": deal_submit_dict["nome_do_indicador"],
+                        "Mensagem": mensagem,
+                    }
+                    
+                    try:
+                        # colocar um spinner aqui checando se foi tudo bonitinho pro hubspot, se foi, exibe a mensagem, se não, pede pra cadastrar de novo
+                        with st.spinner('Registrando o formulário...'):
+                            create_hubspot_deal(contact_dict=contact_submit_dict, deal_dict=deal_submit_dict, note_dict=note_submit_dict, files=files)
+                        st.success("Formulário enviado com sucesso!")
+                        st.write(f"Os dados enviados foram: ")
+                        st.write(dict_to_show_after_success)
+                        st.warning("Por favor, confirme o envio dos dados. Caso haja alguma alteração, entrar em contato diretamente com o setor responsável.")
+                    except:
+                        st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
+
+        elif type_of_view == "Verificar Status dos meus Agenciamentos":
+            pipeline_name = 'Captação de Imóveis'
+
+            nome_do_corretor = st.selectbox(options=df_usuarios_ativos_vista_vendas['Nomecompleto'].tolist(), label='Indicador')
+            button_filter_df = st.button('Filtrar')
+
+            if button_filter_df:
+                with st.spinner('Carregando os dados...'):
+                    api_response = api_client.crm.deals.get_all(archived=False, properties=['amount', 'dealname', 'dealstage', 'status', 'bairro', 'valor_venda',
+                                                                'data_de_contato_para_confirmacao_de_informacoes', 'data_das_fotos', 'nome_do_indicador', 'tipo_de_imovel', 'origem', 'rua', 'hubspot_owner_id', 'closed_lost_reason', 'closedate'])                                                                    
+                    df_hubspot_deals = pd.DataFrame([i.to_dict().get('properties') for i in api_response])
+                    df_hubspot_deals = df_hubspot_deals.drop_duplicates(subset='hs_object_id')
+                    df_hubspot_deals.columns = ['valor_aluguel', 'bairro', 'motivo_perda', 'data_fechamento', 'data_indicacao', 'data_fotos_imovel', 'origem_contato_proprietario' , 'endereco', 'estagio_indicacao', 'ultima_atualizacao', 'deal_id', 'agenciador_responsavel', 'nome_do_indicador', 'origem_imovel', 'tipologia', 'status', 'finalidade', 'valor_venda']
+
+                    df_hubspot_deals = df_hubspot_deals[['endereco', 'estagio_indicacao', 'data_indicacao', 'data_fotos_imovel', 'agenciador_responsavel', 'ultima_atualizacao', 'tipologia', 'bairro', 'finalidade', 'status', 'valor_aluguel', 'valor_venda', 'origem_imovel', 'origem_contato_proprietario', 'motivo_perda', 'nome_do_indicador']]
+
+                    all_pipelines = api_client.crm.pipelines.pipelines_api.get_all(object_type="Deals")
+                    my_pipeline_id = [i.get('id') for i in all_pipelines.to_dict()['results'] if i.get('label') == pipeline_name][0]
+                    my_pipeline_stages = api_client.crm.pipelines.pipeline_stages_api.get_all(object_type="Deals", pipeline_id=my_pipeline_id)
+                    my_pipeline_stages = pd.DataFrame(my_pipeline_stages.to_dict()['results'])
+
+                    all_users = api_client.crm.owners.get_all()
+                    all_users = pd.DataFrame([i.to_dict() for i in all_users])
+                    all_users['agenciador_responsavel'] = all_users['first_name'] + ' ' + all_users['last_name']
+
+                    df_hubspot_deals['estagio_indicacao'] = df_hubspot_deals['estagio_indicacao'].map(my_pipeline_stages.set_index('id')['label'])
+                    df_hubspot_deals['agenciador_responsavel'] = df_hubspot_deals['agenciador_responsavel'].map(all_users.set_index('id')['agenciador_responsavel'])
+                    df_to_show = df_hubspot_deals.loc[df_hubspot_deals['nome_do_indicador'] == nome_do_corretor]
+                    if df_to_show.shape[0] > 0:
+                        st.write(df_to_show)
+                    else:
+                        st.info("Nenhum agenciamento encontrado para o corretor selecionado.")
+
+
 
 
     # ------------- Clientes ------------------------

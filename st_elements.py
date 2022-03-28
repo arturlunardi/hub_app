@@ -277,6 +277,7 @@ def modify_exact_client(**kwargs):
     lead_id = json.loads(response.content)["value"][0]["id"]
         
     # modificando o lead
+    # V3
     values = {
         "duplicityValidation": "false",
         "lead": 
@@ -415,7 +416,8 @@ def get_form_client(indicadores, origens, empreendimentos):
             with st.spinner('Registrando o formulário...'):
                 try:
                     create_vista_lead(client_dict=client_dict, indicadores=indicadores)
-                    modify_exact_client(client_dict=client_dict)
+                    # modify_exact_client(client_dict=client_dict)
+                    st.write(client_dict)
                     st.success("Formulário enviado com sucesso!")
                 except Exception as error:
                     st.error(f"Houve um erro no envio do formulário. {error}")
