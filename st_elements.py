@@ -417,7 +417,6 @@ def get_form_client(indicadores, origens, empreendimentos):
                 try:
                     create_vista_lead(client_dict=client_dict, indicadores=indicadores)
                     modify_exact_client(client_dict=client_dict)
-                    st.write(client_dict)
                     st.success("Formulário enviado com sucesso!")
                 except Exception as error:
                     st.error(f"Houve um erro no envio do formulário. {error}")
