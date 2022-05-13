@@ -264,14 +264,14 @@ if check_password("application_password"):
 
     condition = st.sidebar.selectbox(
         "Selecione a Aba",
-        ("Cadastro de Clientes", "Cadastro de Agenciamentos")
+        ("Cadastro de Agenciamentos", "Cadastro de Clientes")
     )
 
     # ------------- Agenciamentos ------------------------
 
     if condition == 'Cadastro de Agenciamentos':
         st.subheader("Formulário de Indicação de Agenciamentos")
-        df_usuarios_ativos_vista_vendas = get_df_usuarios(only_vendas=True)
+        df_usuarios_ativos_vista_vendas = get_df_usuarios(only_vendas=False)
         api_client = HubSpot(api_key=st.secrets["api_key"])
         deal_submit_dict = {}
         contact_submit_dict = {}
