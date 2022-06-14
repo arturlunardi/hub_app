@@ -218,7 +218,7 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict, files=None):
 
         # criando o deal no hubspot
         # aqui estou definindo dentro da função pra mandar o deal pra essa parte da pipeline
-        deal_dict["dealstage"] = "appointmentscheduled"
+        deal_dict["dealstage"] = "qualifiedtobuy" # Imóvel Captado
         simple_public_object_input = SimplePublicObjectInput(
             properties=deal_dict
         )
