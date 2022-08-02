@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 
-@st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
+# @st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_exact_origens():
     exact_headers = {
         'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ def get_exact_origens():
     return [i["value"] for i in json.loads(response.content)]
 
 
-@st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
+# @st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_all_empreendimentos_vista():
     headers = {
     'accept': 'application/json'
@@ -109,7 +109,7 @@ def associate_file_to_deal(deal_id, id_do_arquivo):
     return response
 
 
-@st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
+# @st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_exact_filtros():
     exact_headers = {
             'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ def check_password(secrets_key):
         return True
 
  
-@st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
+# @st.cache(hash_funcs={"_thread.RLock": lambda _: None, 'builtins.weakref': lambda _: None}, show_spinner=False)
 def get_df_usuarios(only_vendas):
     """
     Retorna df do vista com todos os usuários de locação.
