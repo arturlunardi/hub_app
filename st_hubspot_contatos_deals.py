@@ -180,7 +180,7 @@ def return_labels_hubspot_property(object_type, property_name):
         # para consultar as properties
         api_response = api_client.crm.properties.core_api.get_by_name(object_type=object_type, property_name=property_name, archived=False)
         api_response_dict = api_response.to_dict()
-        return {"options": [option.get('label') for option in api_response_dict['options']], "label": api_response_dict['label']}
+        return {"options": [option.get('label') for option in api_response_dict['options']], "label": api_response_dict['label'], "field_type": api_response_dict['field_type']}
     except PropertyException as e:
         print("Exception when calling core_api->get_by_name: %s\n" % e)
 
@@ -210,11 +210,29 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict, files=None):
         simple_public_object_input = SimplePublicObjectInput(
             properties=contact_dict
         )
-        create_client_response = api_client.crm.contacts.basic_api.create(
-            simple_public_object_input=simple_public_object_input
-        )
 
-        client_id = create_client_response.to_dict()['id']
+        try:
+            create_client_response = api_client.crm.contacts.basic_api.create(
+                simple_public_object_input=simple_public_object_input
+            )
+
+        except ContactException as first_contact_error:
+            # htts_response_pattern = r'HTTP response body: (.*)'
+            error_reason_pattern = r'^(.*?)\.'
+            existing_id_pattern = r'Existing ID: (.*)'
+
+            dict_response = eval(first_contact_error.body)
+            
+            if len(re.findall(error_reason_pattern, dict_response.get('message'))) > 0:
+                # error_message = re.findall(error_reason_pattern, dict_response.get('message'))[0].strip()
+                existing_id = re.findall(existing_id_pattern, dict_response.get('message'))[0].strip()
+            else:
+                raise ContactException("Exception when creating contact: %s\n" % e)
+
+        if 'existing_id' in locals():
+            client_id = existing_id
+        else:
+            client_id = create_client_response.to_dict()['id']
 
         # criando o deal no hubspot
         # aqui estou definindo dentro da função pra mandar o deal pra essa parte da pipeline
@@ -250,12 +268,16 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict, files=None):
 
         response = requests.request("PUT", url, headers=headers, params=querystring)
 
+        return None   
+
     except ContactException as e:
         print("Exception when creating contact: %s\n" % e)
+        raise ContactException("Exception when creating contact: %s\n" % e)
     except DealException as e:
         print("Exception when creating deal: %s\n" % e)
+        raise DealException("Exception when creating deal: %s\n" % e)
 
-    return None   
+    
 
 
 if check_password("application_password"):
@@ -306,8 +328,10 @@ if check_password("application_password"):
                 with col_2:
                     for property in hubspot_properties:
                         property_characteristics = return_labels_hubspot_property(property['object_type'], property['property_name'])
-                        # aqui eu ainda não defini o nome da variável pra adicionar no hub, mas tem que definir
-                        deal_submit_dict[property.get('property_name')] = st.selectbox(options=property_characteristics.get("options"), label=property_characteristics.get("label"))
+                        if property_characteristics.get("field_type") == "select":
+                            deal_submit_dict[property.get('property_name')] = st.selectbox(options=property_characteristics.get("options"), label=property_characteristics.get("label"))
+                        elif property_characteristics.get("field_type") == "checkbox":
+                            deal_submit_dict[property.get('property_name')] = ";".join(st.multiselect(options=property_characteristics.get("options"), label=property_characteristics.get("label")))
                     deal_submit_dict["nome_do_indicador"] = st.selectbox(options=df_usuarios_ativos_vista_vendas['Nomecompleto'].tolist(), label='Indicador')
                 
                 files = st.file_uploader(label='Caso existam documentos, anexe-os aqui.', accept_multiple_files=True)
@@ -353,7 +377,9 @@ if check_password("application_password"):
                         st.write(f"Os dados enviados foram: ")
                         st.write(dict_to_show_after_success)
                         st.warning("Por favor, confirme o envio dos dados. Caso haja alguma alteração, entrar em contato diretamente com o setor responsável.")
-                    except:
+                    except DealException as err:
+                        st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
+                    except ContactException as err_2:
                         st.write("Houve um erro no envio do formulário. Por favor, tente novamente em alguns minutos. Caso o erro persista, entre em contato com o administrador.")
 
         elif type_of_view == "Verificar Status dos meus Agenciamentos":
