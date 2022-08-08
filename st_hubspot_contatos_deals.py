@@ -227,7 +227,7 @@ def create_hubspot_deal(contact_dict, deal_dict, note_dict, files=None):
                 # error_message = re.findall(error_reason_pattern, dict_response.get('message'))[0].strip()
                 existing_id = re.findall(existing_id_pattern, dict_response.get('message'))[0].strip()
             else:
-                raise ContactException("Exception when creating contact: %s\n" % e)
+                raise ContactException("Exception when creating contact: %s\n" % first_contact_error)
 
         if 'existing_id' in locals():
             client_id = existing_id
